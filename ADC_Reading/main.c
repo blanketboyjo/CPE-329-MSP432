@@ -19,11 +19,8 @@ void main(void)
     run_ADC();
     while(1){
         if(hasNew_ADC()){
-            if(1000 <= get_ADC()){
-                P1->OUT |= BIT0;
-            }else{
-                P1->OUT &= ~BIT0;
-            }
+            unsigned int value = get_ADC();
+
             run_ADC();
         }
     }
