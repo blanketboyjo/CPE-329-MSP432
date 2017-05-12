@@ -7,6 +7,7 @@
 
 #include "ADC.h"
 
+#define CALIBRATION_VALUE .000201
 static unsigned int ADCValue;
 static int newValue;
 
@@ -14,7 +15,7 @@ void init_ADC(void){
     NVIC->ISER[0] = 1 << ((ADC14_IRQn) & 31);         // Enable ADC interrupt in NVIC module
     ADC14->CTL0  = 0;      // Ensure it is off and all settings cleared
     ADC14->CTL0  = ADC14_CTL0_SHT0_2  | ADC14_CTL0_SHP |
-                   ADC14_CTL0_PDIV__64| ADC14_CTL0_MSC |
+                   ADC14_CTL0_PDIV__4 | ADC14_CTL0_MSC |
                    ADC14_CTL0_ON;
 
     ADC14->CTL1 = ADC14_CTL1_RES__14BIT;      // Use sampling timer, 12-bit conversion results
@@ -31,18 +32,24 @@ void ADC14_IRQHandler(void){
 }
 
 int hasNew_ADC(void){
-    int temp = newValue;
-    newValue = 0;
-    return temp;
+    return newValue;
 }
 
-unsigned int get_ADC(void){
+unsigned int get_Raw_ADC(void){
+    newValue = 0;
     return ADCValue;
+}
+
+float get_ADC(void){
+    newValue = 0;
+    return ((float)ADCValue)*CALIBRATION_VALUE;
 }
 
 void run_ADC(void){
     if(0 == (ADC14->CTL0 & ADC14_CTL0_SC)){
         ADC14->CTL0 |= ADC14_CTL0_SC;
+        newValue = 0;
     }
 }
+
 

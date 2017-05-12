@@ -28,16 +28,9 @@
 #define UART_BUFFER_LENGTH 20
 #define F_CPU 48000000
 
-
 void init_UART(unsigned int baud);
 void print_Char_UART(char data);
 void print_String_UART(const char* data);
-int  getDACValue(void);
-int  hasNewValue(void);
-
-//Commented out useful for later implementations
-//int  available_UART(void);
-//char read_Char_UART(void);
-//void flush_RX_UART(void);
+int  transmission_Complete_UART(void);
 
 #endif /* UART_UART_H_ */

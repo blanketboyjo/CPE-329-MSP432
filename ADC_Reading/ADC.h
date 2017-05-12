@@ -12,7 +12,8 @@
 
 void init_ADC(void);
 int hasNew_ADC(void);
-unsigned int get_ADC(void);
+unsigned int run_Raw_ADC(void);
+float get_ADC(void);
 void run_ADC(void);
 
 

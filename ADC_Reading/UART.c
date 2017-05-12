@@ -14,14 +14,8 @@
 #include "UART.h"
 
 static volatile char TX_BUFFER[ UART_BUFFER_LENGTH ];
-static volatile char RX_BUFFER[ UART_BUFFER_LENGTH ];
 static volatile unsigned int TX_WRITE_INDEX;
 static volatile unsigned int TX_LOAD_INDEX;
-//static volatile unsigned int RX_READ_INDEX;
-//static volatile unsigned int RX_LOAD_INDEX;
-
-static volatile int DACValueOut;
-static volatile int hasNewDACValue;
 
 void init_UART(unsigned int baud){
 
@@ -91,30 +85,11 @@ void init_UART(unsigned int baud){
 
     //Enable interupts
     EUSCI_A0->IFG   = 0;
-    EUSCI_A0->IE |= EUSCI_A_IE_TXCPTIE | EUSCI_A_IE_RXIE;
+    EUSCI_A0->IE |= EUSCI_A_IE_TXCPTIE ;                    // Only enable TX complete interrupt
     NVIC->ISER[0] = 1 << ((EUSCIA0_IRQn) & 31);
 
 
 }
-
-//Commented out, not needed currently, useful later
-//int  available_UART(void){
-//    if(RX_LOAD_INDEX >= RX_READ_INDEX){
-//        return RX_LOAD_INDEX - RX_READ_INDEX;
-//    }else{
-//        return (RX_LOAD_INDEX + UART_BUFFER_LENGTH)- RX_READ_INDEX;
-//    }
-//}
-
-//char read_Char_UART(void){
-//    char tempValue = RX_BUFFER[RX_READ_INDEX];
-//    RX_READ_INDEX = (RX_READ_INDEX + 1)% UART_BUFFER_LENGTH;
-//    return tempValue;
-//}
-//
-//void flush_RX_UART(void){
-//    RX_READ_INDEX = RX_LOAD_INDEX;
-//}
 
 void print_Char_UART(char data){
     int compareIndex  = TX_LOAD_INDEX == TX_WRITE_INDEX;    // Check if indexes are equal
@@ -145,70 +120,16 @@ void print_String_UART(const char* data){
 }
 
 void EUSCIA0_IRQHandler(void){
-    static int DACValue = 0;                                // Value for ISR DAC value
-    static int valueOk  = 0;                                // Flag for checking DAC value
-    int newLineNeeded = 0;                                  // Flag to clean up terminal output 
-
     //////////////////////////////////////////////////////////
     //                  Receive Handler                     //
     //////////////////////////////////////////////////////////
-    if(EUSCI_A0->IFG & EUSCI_A_IFG_RXIFG){                  // If flag is for RX
-        ////////////////////////////////////////////////////////
-        //                Character interpretation            //
-        ////////////////////////////////////////////////////////
-        char input = EUSCI_A0->RXBUF;                       // Store input on RX buffer
-        EUSCI_A0->IFG &= ~EUSCI_A_IFG_RXIFG;                // Clear RX flag
-        if(input == 13){//If carriage return, check value and set flag accordingly
-            if(valueOk){                                    // If DAC value is valid 
-                DACValueOut = DACValue;                     // Set value to be output
-                hasNewDACValue = 1;                         // Set availability flag
-                DACValue = 0;                               // Clear ISR value
-                valueOk = 0;                                // Clear ISR flag
-            }
-            input = '\n';//Make it show up cleanly on terminal
-            
-        }else if('0' <= input && '9' >= input ){            // Is number
-            DACValue = DACValue * 10;                       // Shift DAC over
-            DACValue += (input - 48);                       // Convert input char to int add to DAC
-            valueOk = 1;                                    // Set value ok
-            //Sanity check value to ensure it isn't too high
-            if(4096 <= DACValue){                           // If too high
-                DACValue = 0;                               // Clear ISR value
-                valueOk = 0;                                // Clear ISR flag
-                newLineNeeded = 1;                          // Auto newline, rejection indicator
-            }
-        }else{                                              //Bad character throw out number
-            DACValue = 0;                                   // Clear ISR value
-            valueOk = 0;                                    // Clear ISR flag
-            newLineNeeded = 1;                              // Auto newline, rejection indicator
-        }
+//    if(EUSCI_A0->IFG & EUSCI_A_IFG_RXIFG){                  // If flag is for RX
+//
+//    }
 
-        ////////////////////////////////////////////////////////////
-        //                        Echo input                      //
-        ////////////////////////////////////////////////////////////
-        int compareIndex  = TX_LOAD_INDEX == TX_WRITE_INDEX;// Check indexes
-        TX_BUFFER[TX_LOAD_INDEX] = input;                   // Add input to buffer
-        TX_LOAD_INDEX = (TX_LOAD_INDEX +1)                  // Increment index with rollover
-                      % UART_BUFFER_LENGTH;
-        if(newLineNeeded){                                  // Newline flag rasied        
-            TX_BUFFER[TX_LOAD_INDEX] = '\n';                // Load newline
-            TX_LOAD_INDEX = (TX_LOAD_INDEX +1)              // Increment index with rollover              
-                      % UART_BUFFER_LENGTH; 
-            newLineNeeded = 0;                              // Clear flag
-        }
-        if(compareIndex){                                   // If index was equal (interrupt disabled)
-          EUSCI_A0->TXBUF = TX_BUFFER[TX_WRITE_INDEX];      // Send a char to UART buffer
-          EUSCI_A0->IFG  &= ~EUSCI_A_IFG_TXCPTIFG;          // Clear interrupt flag
-          EUSCI_A0->IE   |= EUSCI_A_IE_TXCPTIE;             // Enable TX complete interrupt
-        }
-        ///////////////////////////////////////////////////////////////////////////////
-        //  Commented out, more general approach, more effective for other projects  //
-        ///////////////////////////////////////////////////////////////////////////////
-        //Load data and increment load index;
-//        RX_BUFFER[RX_LOAD_INDEX] = EUSCI_A0->RXBUF;
-//        RX_LOAD_INDEX = (RX_LOAD_INDEX + 1)% UART_BUFFER_LENGTH;
-
-    }
+    //////////////////////////////////////////////////////////
+    //                  Transmit Handler                    //
+    //////////////////////////////////////////////////////////
     if(EUSCI_A0->IFG & EUSCI_A_IFG_TXCPTIFG){
         EUSCI_A0->IFG   &= ~EUSCI_A_IFG_TXCPTIFG;           // Clear flag
         TX_WRITE_INDEX = (1+ TX_WRITE_INDEX)                // Increment index with rollover 
@@ -221,15 +142,6 @@ void EUSCIA0_IRQHandler(void){
     }
 }
 
-//////////////////////////////////////////////////////////////////////
-//                  Only exists for assignment 7                    //
-//////////////////////////////////////////////////////////////////////
-int  getDACValue(void){
-    return DACValueOut;                                     // Return value
-}
-
-int  hasNewValue(void){
-    char tempValue = hasNewDACValue;                        // Store flag
-    hasNewDACValue = 0;                                     // Clear flag
-    return tempValue;                                       // Return stored flag
+int  transmission_Complete_UART(void){
+    return  TX_WRITE_INDEX == TX_LOAD_INDEX;
 }
