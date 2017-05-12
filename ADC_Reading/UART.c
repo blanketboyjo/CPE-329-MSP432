@@ -4,10 +4,12 @@
  *    See UART.h for more details
  *  
  * Errors:
- *   None Currently May 5, 2017
+ *   None Currently May 12, 2017
  *
  * Revisions:
  *   May 5,  2017 - Initial Creation
+ *   May 10, 2017 - Modified to work with assignment 8
+ *   May 12, 2017 - Cleaned and commented
  *
  *  Author: Drew Hartley, Jordan Jones
  */
@@ -143,5 +145,5 @@ void EUSCIA0_IRQHandler(void){
 }
 
 int  transmission_Complete_UART(void){
-    return  TX_WRITE_INDEX == TX_LOAD_INDEX;
+    return  TX_WRITE_INDEX == TX_LOAD_INDEX;                // Return whether tx indices are equal
 }

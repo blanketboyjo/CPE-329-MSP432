@@ -1,10 +1,17 @@
 /*
- * ADC.c
+ *  ADC.C
+ *    This holds the internal functions for UART and protected values
+ *    See ADC.h for more details
  *
- *  Created on: May 8, 2017
- *      Author: Jordan
+ * Errors:
+ *   None Currently May 10, 2017
+ *
+ * Revisions:
+ *   May 10,  2017 - Initial Creation
+ *   May 12, 2017 - Cleaned and commented
+ *
+ *  Author: Drew Hartley, Jordan Jones
  */
-
 #include "ADC.h"
 
 #define CALIBRATION_VALUE .000201
@@ -27,28 +34,28 @@ void init_ADC(void){
 }
 
 void ADC14_IRQHandler(void){
-    ADCValue = ADC14->MEM[0];
-    newValue = 1;
+    ADCValue = ADC14->MEM[0];                   // Store new data to buffer
+    newValue = 1;                               // Set flag
 }
 
 int hasNew_ADC(void){
-    return newValue;
+    return newValue;                            // Return flag value
 }
 
 unsigned int get_Raw_ADC(void){
-    newValue = 0;
-    return ADCValue;
+    newValue = 0;                               // Clear flag
+    return ADCValue;                            // Return raw unsigned int
 }
 
 float get_ADC(void){
-    newValue = 0;
-    return ((float)ADCValue)*CALIBRATION_VALUE;
+    newValue = 0;                               // Clear flag
+    return ((float)ADCValue)*CALIBRATION_VALUE; // Return calibrated value
 }
 
 void run_ADC(void){
-    if(0 == (ADC14->CTL0 & ADC14_CTL0_SC)){
-        ADC14->CTL0 |= ADC14_CTL0_SC;
-        newValue = 0;
+    if(0 == (ADC14->CTL0 & ADC14_CTL0_SC)){     // If System not running
+        ADC14->CTL0 |= ADC14_CTL0_SC;           // Start conversion
+        newValue = 0;                           // Clear flag
     }
 }
 

@@ -1,21 +1,22 @@
 /*
  * UART.h
  *
- *   This libary holds functions for UART, specifically for assignment 7
+ *   This libary holds functions for UART, specifically for assignment 8
  *    init_UART         - Starts UART at a give baud
  *    print_Char_UART   - Prints a single char to the terminal
  *    print_String_UART - Prints a string to the terminal
- *    int_getDACValue   - Returns value of DAC
- *    int hasNewValue   - Returns whether there is a new value for DAC
+ *    transmission_Complete_UART - Returns if buffer is empty
  *
  * Depenedencies:
  *   MSP.h -  Needed for direct register access
  *
  * Errors:
- *   None Currently May 5, 2017
+ *   None Currently May 12, 2017
  *
  * Revisions:
  *   May 5,  2017 - Initial Creation
+ *   May 10, 2017 - Modified to work with assignment 8
+ *   May 12, 2017 - Cleaned and commented
  *
  *  Author: Drew Hartley, Jordan Jones
  *
